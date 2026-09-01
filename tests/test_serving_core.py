@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 """Core logic tests that do not require a GPU."""
 import queue
+import sys
 import threading
 import time
 import unittest
+from pathlib import Path
+
+# Allow running directly as `python tests/test_serving_core.py`.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from nanovllm.config import Config
 from nanovllm.engine.block_manager import BlockManager
