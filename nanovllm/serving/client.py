@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 """Minimal gRPC client for the nano-vllm serving layer."""
 import argparse
+import sys
 import uuid
+from pathlib import Path
+
+# Allow running directly as `python nanovllm/serving/client.py`.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import grpc
 
