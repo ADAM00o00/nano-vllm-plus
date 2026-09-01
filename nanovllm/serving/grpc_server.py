@@ -173,7 +173,9 @@ def serve(model: str | None = None, port: int = 50051,
             router, instance_id, actual_addr,
             interval=heartbeat_interval,
             get_state=lambda: (worker.cache_usage_ratio,
-                               worker.get_cached_prefix_hashes()),
+                               worker.get_cached_prefix_hashes(),
+                               worker.num_waiting,
+                               worker.num_running),
         )
         heartbeat.start()
         print(f"[redis] instance {instance_id} registered at {actual_addr}")

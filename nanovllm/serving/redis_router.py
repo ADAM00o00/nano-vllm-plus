@@ -54,25 +54,35 @@ class RedisPrefixRouter:
     # ------------------------------------------------------------------
     def register_instance(self, instance_id: str, addr: str,
                           cache_usage_ratio: float = 0.0,
-                          prefix_hashes: Optional[list[int]] = None) -> None:
+                          prefix_hashes: Optional[list[int]] = None,
+                          num_waiting: int = 0,
+                          num_running: int = 0) -> None:
         self.redis.sadd("nano:instances", instance_id)
-        self._write_instance(instance_id, addr, cache_usage_ratio, prefix_hashes)
+        self._write_instance(instance_id, addr, cache_usage_ratio, prefix_hashes,
+                             num_waiting, num_running)
 
     def heartbeat(self, instance_id: str, addr: str,
                   cache_usage_ratio: float,
-                  prefix_hashes: Optional[list[int]] = None) -> None:
+                  prefix_hashes: Optional[list[int]] = None,
+                  num_waiting: int = 0,
+                  num_running: int = 0) -> None:
         self.redis.sadd("nano:instances", instance_id)
-        self._write_instance(instance_id, addr, cache_usage_ratio, prefix_hashes)
+        self._write_instance(instance_id, addr, cache_usage_ratio, prefix_hashes,
+                             num_waiting, num_running)
 
     def _write_instance(self, instance_id: str, addr: str,
                         cache_usage_ratio: float,
-                        prefix_hashes: Optional[list[int]]) -> None:
+                        prefix_hashes: Optional[list[int]],
+                        num_waiting: int = 0,
+                        num_running: int = 0) -> None:
         key = f"nano:instance:{instance_id}"
         now = time.time()
         data = {
             "addr": addr,
             "cache_usage_ratio": float(cache_usage_ratio),
             "last_seen": now,
+            "num_waiting": int(num_waiting),
+            "num_running": int(num_running),
         }
         if prefix_hashes is not None:
             data["prefix_count"] = len(prefix_hashes)
@@ -158,9 +168,16 @@ class InstanceHeartbeat:
     def _run(self):
         while not self._stop:
             try:
-                usage_ratio, prefix_hashes = self.get_state()
+                state = self.get_state()
+                if len(state) >= 4:
+                    usage_ratio, prefix_hashes, num_waiting, num_running = state[:4]
+                else:
+                    usage_ratio, prefix_hashes = state
+                    num_waiting = num_running = 0
                 self.router.heartbeat(self.instance_id, self.addr,
-                                      usage_ratio, prefix_hashes)
+                                      usage_ratio, prefix_hashes,
+                                      num_waiting=num_waiting,
+                                      num_running=num_running)
             except Exception as exc:
                 print(f"[redis-heartbeat] {exc}")
             time.sleep(self.interval)
