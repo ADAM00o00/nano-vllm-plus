@@ -29,6 +29,14 @@ python nanovllm/serving/generate_proto.py
 
 ## Start server
 
+GPU-free mock mode (no model, no GPU needed):
+
+```bash
+python -m nanovllm.serving --mock --port 50051 --metrics-port 9100
+```
+
+Real GPU mode:
+
 ```bash
 # GPU environment required to actually run the engine.
 python -m nanovllm.serving --model /path/to/Qwen3-0.6B --port 50051 --metrics-port 9100
