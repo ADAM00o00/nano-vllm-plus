@@ -2,6 +2,7 @@ __all__ = [
     "AdmissionController",
     "EngineWorker",
     "RequestHandle",
+    "MockEngineWorker",
     "RedisPrefixRouter",
     "InstanceHeartbeat",
     "GatewayServicer",
@@ -17,6 +18,9 @@ def __getattr__(name):
     if name in ("EngineWorker", "RequestHandle"):
         from nanovllm.serving.engine_worker import EngineWorker, RequestHandle
         return {"EngineWorker": EngineWorker, "RequestHandle": RequestHandle}[name]
+    if name == "MockEngineWorker":
+        from nanovllm.serving.mock_engine import MockEngineWorker
+        return MockEngineWorker
     if name == "RedisPrefixRouter":
         from nanovllm.serving.redis_router import RedisPrefixRouter
         return RedisPrefixRouter

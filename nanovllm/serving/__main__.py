@@ -9,6 +9,10 @@ def main():
     parser = argparse.ArgumentParser(description="nano-vllm gRPC serving")
     parser.add_argument("--gateway", action="store_true",
                         help="Run as a routing gateway instead of an engine instance")
+    parser.add_argument("--mock", action="store_true",
+                        help="Run with a GPU-free mock engine")
+    parser.add_argument("--token-interval", type=float, default=0.01,
+                        help="Mock engine token interval in seconds")
     parser.add_argument("--model", default=None, help="HuggingFace model directory")
     parser.add_argument("--port", type=int, default=50051)
     parser.add_argument("--metrics-port", type=int, default=9100)
@@ -42,14 +46,16 @@ def main():
         )
         return
 
-    if not args.model:
-        parser.error("--model is required unless --gateway is used")
+    if not args.model and not args.mock:
+        parser.error("--model is required unless --gateway or --mock is used")
 
     engine_kwargs = {}
     if args.max_num_seqs is not None:
         engine_kwargs["max_num_seqs"] = args.max_num_seqs
     if args.enforce_eager:
         engine_kwargs["enforce_eager"] = True
+    if args.mock:
+        engine_kwargs["token_interval"] = args.token_interval
 
     serve(
         model=args.model,
@@ -63,6 +69,7 @@ def main():
         redis_url=args.redis_url,
         addr=args.addr,
         heartbeat_interval=args.heartbeat_interval,
+        mock=args.mock,
         **engine_kwargs,
     )
 

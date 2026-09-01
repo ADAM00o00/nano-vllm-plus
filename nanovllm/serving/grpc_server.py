@@ -111,7 +111,7 @@ class NanoVLLMServicer(nanovllm_pb2_grpc.NanoVLLMServiceServicer):
         )
 
 
-def serve(model: str, port: int = 50051,
+def serve(model: str | None = None, port: int = 50051,
           max_workers: int = 10,
           max_qps: float = 100.0,
           high_watermark: float = 0.90,
@@ -121,8 +121,13 @@ def serve(model: str, port: int = 50051,
           redis_url: str | None = None,
           addr: str | None = None,
           heartbeat_interval: float = 5.0,
+          mock: bool = False,
           **engine_kwargs):
-    """Start the gRPC server (blocking)."""
+    """Start the gRPC server (blocking).
+
+    If ``mock`` is True, a GPU-free MockEngineWorker is used instead of the
+    real nano-vllm engine.
+    """
     if metrics_port > 0:
         try:
             from prometheus_client import start_http_server
@@ -130,9 +135,14 @@ def serve(model: str, port: int = 50051,
         except Exception as exc:  # pragma: no cover
             print(f"Warning: failed to start Prometheus on {metrics_port}: {exc}")
 
-    from nanovllm.serving.engine_worker import EngineWorker
-
-    worker = EngineWorker(model, **engine_kwargs)
+    if mock:
+        from nanovllm.serving.mock_engine import MockEngineWorker
+        worker = MockEngineWorker(token_interval=engine_kwargs.get("token_interval", 0.01))
+    else:
+        if model is None:
+            raise ValueError("model is required when mock=False")
+        from nanovllm.serving.engine_worker import EngineWorker
+        worker = EngineWorker(model, **engine_kwargs)
     admission = AdmissionController(max_qps=max_qps,
                                     high_watermark=high_watermark,
                                     low_watermark=low_watermark)

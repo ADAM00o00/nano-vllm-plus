@@ -141,6 +141,37 @@ class GrpcFakeWorkerTest(unittest.TestCase):
             server.stop(0)
 
 
+class MockEngineTest(unittest.TestCase):
+    def test_mock_worker_streams_and_aborts(self):
+        from nanovllm.serving.mock_engine import MockEngineWorker
+
+        worker = MockEngineWorker(token_interval=0.001)
+        handle = worker.submit("hello", SamplingParams(max_tokens=2, temperature=1.0))
+        chunks = []
+        while True:
+            tokens, finished, aborted = handle.output_queue.get(timeout=2)
+            chunks.append((tokens, finished, aborted))
+            if finished or aborted:
+                break
+        self.assertEqual([t for ts, _, _ in chunks for t in ts], [1, 1])
+        self.assertTrue(chunks[-1][1])
+
+        # Abort a long-running mock request.
+        h2 = worker.submit("world", SamplingParams(max_tokens=1000, temperature=1.0))
+        deadline = time.time() + 2
+        while h2.seq_id == -1 and time.time() < deadline:
+            time.sleep(0.001)
+        worker.abort(h2.seq_id, handle=h2)
+        final = None
+        while True:
+            tokens, finished, aborted = h2.output_queue.get(timeout=2)
+            if finished or aborted:
+                final = (tokens, finished, aborted)
+                break
+        self.assertTrue(final[2])
+        self.assertTrue(final[1])
+
+
 class GatewayRoutingTest(unittest.TestCase):
     def test_gateway_routes_to_engine_instance(self):
         import fakeredis
