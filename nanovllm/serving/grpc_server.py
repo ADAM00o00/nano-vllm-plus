@@ -43,6 +43,18 @@ class NanoVLLMServicer(nanovllm_pb2_grpc.NanoVLLMServiceServicer):
         else:
             prompt = request.prompt
 
+        # Prefix-cache hit/miss observability (only when token ids are available).
+        if isinstance(prompt, list):
+            has_cached_prefix = getattr(self.worker, "has_cached_prefix", None)
+            if callable(has_cached_prefix):
+                try:
+                    if has_cached_prefix(prompt):
+                        metrics.PREFIX_CACHE_HIT_TOTAL.inc()
+                    else:
+                        metrics.PREFIX_CACHE_MISS_TOTAL.inc()
+                except Exception:
+                    pass
+
         sampling_params = SamplingParams(
             temperature=request.temperature if request.temperature > 0 else 1.0,
             max_tokens=request.max_tokens if request.max_tokens > 0 else 64,

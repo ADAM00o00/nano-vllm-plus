@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """Thread-safe wrapper around LLMEngine.
 
 The LLMEngine is not thread-safe.  All engine calls are executed on a single
@@ -19,6 +19,7 @@ from nanovllm.serving.metrics import (
     RECLAIM_DURATION_SECONDS,
     RUNNING_SEQS,
 )
+from nanovllm.serving.redis_router import compute_prefix_hash
 
 TokenIds = list[int]
 Prompt = Union[str, list[int]]
@@ -42,6 +43,8 @@ class EngineWorker:
 
     def __init__(self, model: str, **kwargs):
         self.llm = LLMEngine(model, **kwargs)
+        self._block_size = self.llm.scheduler.block_size
+        self._cached_prefix_hashes: set[int] = set()
         self._cmd_queue: "queue.Queue" = queue.Queue()
         self._handles: dict[int, RequestHandle] = {}
         self._handles_lock = threading.Lock()
@@ -82,6 +85,13 @@ class EngineWorker:
     def get_cached_prefix_hashes(self) -> list[int]:
         return self.llm.get_cached_prefix_hashes()
 
+    def has_cached_prefix(self, prompt_token_ids: list[int]) -> bool:
+        """Thread-safe check using a worker-maintained snapshot of prefix hashes."""
+        prefix_hash = compute_prefix_hash(prompt_token_ids, self._block_size)
+        if prefix_hash is None:
+            return False
+        return int(prefix_hash) in self._cached_prefix_hashes
+
     # ------------------------------------------------------------------
     # Worker thread
     # ------------------------------------------------------------------
@@ -105,6 +115,7 @@ class EngineWorker:
                 continue
 
             outputs, _ = self.llm.step()
+            self._cached_prefix_hashes = set(self.llm.get_cached_prefix_hashes())
             QUEUE_DEPTH.set(self.num_waiting)
             RUNNING_SEQS.set(self.num_running)
             CACHE_USAGE_RATIO.set(self.cache_usage_ratio)
