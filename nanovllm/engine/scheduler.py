@@ -22,6 +22,36 @@ class Scheduler:
     def add(self, seq: Sequence):
         self.waiting.append(seq)
 
+    @property
+    def num_waiting(self):
+        return len(self.waiting)
+
+    @property
+    def num_running(self):
+        return len(self.running)
+
+    @property
+    def cache_usage_ratio(self):
+        return self.block_manager.usage_ratio
+
+    def abort(self, seq_id: int) -> bool:
+        for seq in self.waiting:
+            if seq.seq_id == seq_id:
+                self.waiting.remove(seq)
+                self._abort(seq)
+                return True
+        for seq in self.running:
+            if seq.seq_id == seq_id:
+                self.running.remove(seq)
+                self._abort(seq)
+                return True
+        return False
+
+    def _abort(self, seq: Sequence):
+        if seq.block_table:
+            self.block_manager.deallocate(seq)
+        seq.status = SequenceStatus.ABORTED
+
     def schedule(self) -> tuple[list[Sequence], bool]:
         scheduled_seqs = []
         num_batched_tokens = 0

@@ -45,6 +45,40 @@ class LLMEngine:
             prompt = self.tokenizer.encode(prompt)
         seq = Sequence(prompt, sampling_params)
         self.scheduler.add(seq)
+        return seq
+
+    def abort_request(self, seq_id: int) -> bool:
+        return self.scheduler.abort(seq_id)
+
+    @property
+    def cache_usage_ratio(self):
+        return self.scheduler.cache_usage_ratio
+
+    @property
+    def num_waiting(self):
+        return self.scheduler.num_waiting
+
+    @property
+    def num_running(self):
+        return self.scheduler.num_running
+
+    def get_cached_prefix_hashes(self):
+        return self.scheduler.block_manager.get_cached_prefix_hashes()
+
+    def get_num_cached_prefix_blocks(self, prompt: str | list[int]) -> int:
+        if isinstance(prompt, str):
+            prompt = self.tokenizer.encode(prompt)
+        seq = Sequence(prompt, SamplingParams())
+        return self.scheduler.block_manager.get_num_cached_prefix_blocks(seq)
+
+    def get_sequence(self, seq_id: int):
+        for seq in self.scheduler.waiting:
+            if seq.seq_id == seq_id:
+                return seq
+        for seq in self.scheduler.running:
+            if seq.seq_id == seq_id:
+                return seq
+        return None
 
     def step(self):
         seqs, is_prefill = self.scheduler.schedule()

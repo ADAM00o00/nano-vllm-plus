@@ -32,6 +32,23 @@ class BlockManager:
         self.free_block_ids: deque[int] = deque(range(num_blocks))
         self.used_block_ids: set[int] = set()
 
+    @property
+    def num_blocks(self):
+        return len(self.blocks)
+
+    @property
+    def num_free_blocks(self):
+        return len(self.free_block_ids)
+
+    @property
+    def usage_ratio(self):
+        if not self.blocks:
+            return 0.0
+        return 1.0 - len(self.free_block_ids) / len(self.blocks)
+
+    def get_cached_prefix_hashes(self):
+        return list(self.hash_to_block_id.keys())
+
     @classmethod
     def compute_hash(cls, token_ids: list[int], prefix: int = -1):
         h = xxhash.xxh64()
@@ -55,22 +72,30 @@ class BlockManager:
         self.used_block_ids.remove(block_id)
         self.free_block_ids.append(block_id)
 
-    def can_allocate(self, seq: Sequence) -> int:
+    def find_cached_prefix_blocks(self, seq: Sequence) -> list[int]:
         h = -1
-        num_cached_blocks = 0
-        num_new_blocks = seq.num_blocks
+        cached_block_ids = []
         for i in range(seq.num_blocks - 1):
             token_ids = seq.block(i)
             h = self.compute_hash(token_ids, h)
             block_id = self.hash_to_block_id.get(h, -1)
             if block_id == -1 or self.blocks[block_id].token_ids != token_ids:
                 break
-            num_cached_blocks += 1
+            cached_block_ids.append(block_id)
+        return cached_block_ids
+
+    def get_num_cached_prefix_blocks(self, seq: Sequence) -> int:
+        return len(self.find_cached_prefix_blocks(seq))
+
+    def can_allocate(self, seq: Sequence) -> int:
+        cached_block_ids = self.find_cached_prefix_blocks(seq)
+        num_new_blocks = seq.num_blocks
+        for block_id in cached_block_ids:
             if block_id in self.used_block_ids:
                 num_new_blocks -= 1
         if len(self.free_block_ids) < num_new_blocks:
             return -1
-        return num_cached_blocks
+        return len(cached_block_ids)
 
     def allocate(self, seq: Sequence, num_cached_blocks: int):
         assert not seq.block_table

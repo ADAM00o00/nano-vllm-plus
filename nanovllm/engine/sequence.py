@@ -9,6 +9,7 @@ class SequenceStatus(Enum):
     WAITING = auto()
     RUNNING = auto()
     FINISHED = auto()
+    ABORTED = auto()
 
 
 class Sequence:
@@ -39,6 +40,10 @@ class Sequence:
     @property
     def is_finished(self):
         return self.status == SequenceStatus.FINISHED
+
+    @property
+    def is_aborted(self):
+        return self.status == SequenceStatus.ABORTED
 
     @property
     def num_completion_tokens(self):

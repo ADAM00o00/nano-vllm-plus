@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package nanovllm.serving;
+
+service NanoVLLMService {
+  rpc Infer(InferRequest) returns (stream InferResponse);
+  rpc Abort(AbortRequest) returns (AbortResponse);
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+message InferRequest {
+  string request_id = 1;
+  string prompt = 2;
+  repeated int32 prompt_token_ids = 3;
+  float temperature = 4;
+  int32 max_tokens = 5;
+  bool ignore_eos = 6;
+}
+
+message InferResponse {
+  string request_id = 1;
+  repeated int32 token_ids = 2;
+  bool finished = 3;
+  bool aborted = 4;
+  int32 seq_id = 5;
+}
+
+message AbortRequest {
+  string request_id = 1;
+}
+
+message AbortResponse {
+  bool ok = 1;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  bool ready = 1;
+  double cache_usage_ratio = 2;
+  int32 num_waiting = 3;
+  int32 num_running = 4;
+}

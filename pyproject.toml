@@ -1,4 +1,4 @@
-[build-system]
+﻿[build-system]
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
@@ -17,6 +17,17 @@ dependencies = [
     "transformers>=4.51.0",
     "flash-attn",
     "xxhash",
+]
+
+[project.optional-dependencies]
+serving = [
+    "grpcio>=1.60",
+    "grpcio-tools>=1.60",
+    "prometheus-client>=0.20",
+    "redis>=5.0",
+]
+test = [
+    "fakeredis>=2.0",
 ]
 
 [project.urls]

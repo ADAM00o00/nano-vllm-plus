@@ -1,0 +1,13 @@
+# Serving-layer dependencies for nano-vllm-plus
+# Install with:
+#   pip install -r requirements-serving.txt
+# On Windows, use a PyPI mirror if the default index is slow:
+#   pip install -r requirements-serving.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+#
+# GPU-side (needed only when running the actual engine, not for control-plane code):
+#   pip install triton-windows -i https://pypi.tuna.tsinghua.edu.cn/simple
+#   # flash-attn on Windows usually requires a prebuilt wheel; install manually.
+grpcio>=1.60
+grpcio-tools>=1.60
+prometheus-client>=0.20
+redis>=5.0
