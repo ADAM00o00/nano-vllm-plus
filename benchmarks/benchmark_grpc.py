@@ -6,9 +6,14 @@ Run after the server is up:
     python benchmarks/benchmark_grpc.py --target localhost:50051 --requests 64 --concurrency 8
 """
 import argparse
+import sys
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
+# Allow running directly as `python benchmarks/benchmark_grpc.py`.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import grpc
 
