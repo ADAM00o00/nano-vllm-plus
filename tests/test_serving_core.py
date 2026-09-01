@@ -172,6 +172,54 @@ class MockEngineTest(unittest.TestCase):
         self.assertTrue(final[1])
 
 
+class FullMockStackTest(unittest.TestCase):
+    def test_mock_engine_through_gateway(self):
+        import fakeredis
+        import grpc
+        from concurrent import futures
+        from nanovllm.serving import nanovllm_pb2, nanovllm_pb2_grpc
+        from nanovllm.serving.gateway import GatewayServicer
+        from nanovllm.serving.grpc_server import NanoVLLMServicer
+        from nanovllm.serving.mock_engine import MockEngineWorker
+
+        # Start two mock engine instances.
+        engines = []
+        for i in range(2):
+            worker = MockEngineWorker(token_interval=0.001)
+            server = grpc.server(futures.ThreadPoolExecutor(max_workers=2))
+            nanovllm_pb2_grpc.add_NanoVLLMServiceServicer_to_server(
+                NanoVLLMServicer(worker), server)
+            port = server.add_insecure_port("localhost:0")
+            server.start()
+            engines.append((server, port, worker))
+
+        # Register both in fake Redis.
+        router = RedisPrefixRouter(fakeredis.FakeStrictRedis())
+        for i, (_, port, worker) in enumerate(engines):
+            router.register_instance(f"engine-{i}", f"localhost:{port}",
+                                     worker.cache_usage_ratio, [])
+
+        # Start gateway.
+        gateway_server = grpc.server(futures.ThreadPoolExecutor(max_workers=2))
+        nanovllm_pb2_grpc.add_NanoVLLMServiceServicer_to_server(
+            GatewayServicer(router), gateway_server)
+        gateway_port = gateway_server.add_insecure_port("localhost:0")
+        gateway_server.start()
+
+        try:
+            channel = grpc.insecure_channel(f"localhost:{gateway_port}")
+            stub = nanovllm_pb2_grpc.NanoVLLMServiceStub(channel)
+            responses = list(stub.Infer(nanovllm_pb2.InferRequest(
+                request_id="full1", prompt="hello", max_tokens=2)))
+            tokens = [tid for r in responses for tid in r.token_ids]
+            self.assertEqual(tokens, [1, 1])
+            self.assertTrue(responses[-1].finished)
+        finally:
+            gateway_server.stop(0)
+            for server, _, _ in engines:
+                server.stop(0)
+
+
 class GatewayRoutingTest(unittest.TestCase):
     def test_gateway_routes_to_engine_instance(self):
         import fakeredis
