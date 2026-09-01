@@ -55,6 +55,12 @@ python -m nanovllm.serving \
 
 ## Routing gateway (multi-instance)
 
+Start a local Redis with:
+
+```bash
+docker compose up -d redis
+```
+
 After engine instances register themselves in Redis, start the gateway:
 
 ```bash
