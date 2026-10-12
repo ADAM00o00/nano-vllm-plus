@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """gRPC server for nano-vllm serving.
 
 Run after generating proto stubs:
@@ -67,12 +67,11 @@ class NanoVLLMServicer(nanovllm_pb2_grpc.NanoVLLMServiceServicer):
         metrics.REQUESTS_TOTAL.inc()
         metrics.INFLIGHT_REQUESTS.inc()
 
+        completed = False
         try:
             while True:
                 if context.is_active() is False:
                     # Client disconnected/cancelled -> cascade abort.
-                    self.worker.abort(handle.seq_id, handle=handle)
-                    metrics.ABORT_TOTAL.inc()
                     break
                 try:
                     chunk = handle.output_queue.get(timeout=0.1)
@@ -85,8 +84,14 @@ class NanoVLLMServicer(nanovllm_pb2_grpc.NanoVLLMServiceServicer):
                 yield self._infer_response(request.request_id, handle.seq_id,
                                            token_ids, finished, aborted)
                 if finished or aborted:
+                    completed = True
                     break
         finally:
+            # If the client cancelled/closed before completion, abort the
+            # engine request so its KV cache is released promptly.
+            if not completed:
+                self.worker.abort(handle.seq_id, handle=handle)
+                metrics.ABORT_TOTAL.inc()
             metrics.INFLIGHT_REQUESTS.dec()
             with self._request_map_lock:
                 self._request_map.pop(request.request_id, None)
@@ -191,3 +196,4 @@ def serve(model: str | None = None, port: int = 50051,
         if heartbeat is not None:
             heartbeat.stop()
         worker.stop()
+
