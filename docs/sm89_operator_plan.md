@@ -1,7 +1,10 @@
-﻿# SM89 / RTX 4060 专用算子实现计划
+# SM89 / RTX 4060 专用算子实现计划
 
 > 目标：为 RTX 4060（Ada Lovelace，sm_89）实现一个专用推理算子，优先替换 nano-vllm-plus 中最热的 **decode attention** 路径。
 > 本文档是给新对话的开工说明，包含环境、现状、算子设计、验证指标、集成点和里程碑。
+>
+> **Phase 1 已完成，结果见 [`sm89_phase1_results.md`](sm89_phase1_results.md)**（正确性 1.95e-3、
+> 延迟均值 1.00x vs flash-attn、在线服务无回退；split-KV 与 num_stages 两条路已实测证伪）。
 
 ---
 
