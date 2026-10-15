@@ -41,7 +41,7 @@
 | WSL `~/nano-vllm-plus` + conda `ml` | torch **2.13.0+cu130**、triton **3.7.1**、flash_attn **2.8.3.post1**、RTX 4060 sm_89 —— 与计划书一致 |
 
 **决策**：**在 Windows 仓库写代码（它是交付副本、会话工作目录），用脚本同步到 WSL 执行**（只有 WSL 有可用工具链）。
-同步脚本：`experiments/scripts/sync_to_wsl.sh`（`rsync`，不用 `--delete`，不动 WSL 独有文件）。
+同步脚本：`experiments/sync_to_wsl.sh`（`rsync`，不用 `--delete`，不动 WSL 独有文件）。
 WSL 里那个副本没有 `.git`，是 Windows 仓库的拷贝，关键文件 md5 一致。
 
 **3）交付 Phase 1 代码**
@@ -698,7 +698,7 @@ batch 涨 8 倍，单次耗时涨 **19 倍**（超线性爆炸），像是**固�
 ### 执行环境
 ```bash
 # 代码在 Windows 仓库写，同步到 WSL 执行（只有 WSL 有 triton + flash-attn）
-bash experiments/scripts/sync_to_wsl.sh       # rsync，不带 --delete
+bash experiments/sync_to_wsl.sh       # rsync，不带 --delete
 wsl.exe -d Ubuntu -- bash <script>            # 普通用户
 wsl.exe -d Ubuntu -u root -- bash <script>    # ncu/nsys 需要（sudo 要密码，wsl -u root 免密）
 source ~/miniconda3/etc/profile.d/conda.sh && conda activate ml
