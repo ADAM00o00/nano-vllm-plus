@@ -43,6 +43,22 @@ outputs = llm.generate(prompts, sampling_params)
 outputs[0]["text"]
 ```
 
+## Serving layer
+
+This fork adds a distributed serving layer (gRPC + Redis prefix routing + dual
+backpressure + cascade cancellation) on top of the engine.
+
+```bash
+# GPU-free demo: mock gRPC engine, no model and no GPU needed
+python -m nanovllm.serving --mock --port 50051 --metrics-port 9100
+
+# Real engine
+python -m nanovllm.serving --model /path/to/Qwen3-0.6B
+```
+
+See [`nanovllm/serving/README.md`](nanovllm/serving/README.md) for endpoints,
+CLI flags and the cascade-cancel path.
+
 ## Benchmark
 
 See `bench.py` for benchmark.
