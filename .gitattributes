@@ -1,23 +1,39 @@
-# Line-ending policy.
+# Line-ending policy: LF everywhere, in the repository and on disk.
 #
-# The repo grew with core.autocrlf=true and no attribute file, so the index mixes
-# LF and CRLF.  These rules stop that from spreading (new files are normalised)
-# without rewriting history or mass-renormalising existing blobs -- a one-shot
-# `git add --renormalize .` would otherwise show up as a whitespace-only diff
-# across a dozen files.  Run it later if you want the tree fully consistent.
-* text=auto
+# The fork inherited core.autocrlf=true and had no attribute file, so the working
+# tree mixed LF and CRLF (31 of 47 tracked files carried CR) and every checkout
+# on a different machine produced a different diff.  One policy is simpler than a
+# per-machine one: all text is LF, including on Windows.
+* text=auto eol=lf
 
-# Shell/Python tooling in this repo is executed on Linux/WSL, where a stray CR
-# breaks the shebang and `bash -e` line.
+# Shell/Python tooling runs on Linux/WSL, where a stray CR breaks the shebang and
+# the `bash -e` line, so these must never be converted.
 *.sh   text eol=lf
 *.py   text eol=lf
+
+# Everything else text: force LF rather than leaving it to core.autocrlf, which
+# is what turned these into CRLF on checkout in the first place.
+*.md     text eol=lf
+*.rst    text eol=lf
+*.txt    text eol=lf
+*.json   text eol=lf
+*.yml    text eol=lf
+*.yaml   text eol=lf
+*.toml   text eol=lf
+*.cfg    text eol=lf
+*.ini    text eol=lf
+*.proto  text eol=lf
+*.html   text eol=lf
+*.css    text eol=lf
+*.js     text eol=lf
+*.ts     text eol=lf
 
 # Windows-only launchers keep their native endings.
 *.bat  text eol=crlf
 *.cmd  text eol=crlf
 *.ps1  text eol=crlf
 
-# Generated protobuf stubs: never diff, never merge.
+# Generated protobuf stubs: no diff, no three-way merge.
 nanovllm/serving/nanovllm_pb2.py      -diff merge=binary
 nanovllm/serving/nanovllm_pb2_grpc.py -diff merge=binary
 
