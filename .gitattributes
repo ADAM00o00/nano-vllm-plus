@@ -1,0 +1,27 @@
+# Line-ending policy.
+#
+# The repo grew with core.autocrlf=true and no attribute file, so the index mixes
+# LF and CRLF.  These rules stop that from spreading (new files are normalised)
+# without rewriting history or mass-renormalising existing blobs -- a one-shot
+# `git add --renormalize .` would otherwise show up as a whitespace-only diff
+# across a dozen files.  Run it later if you want the tree fully consistent.
+* text=auto
+
+# Shell/Python tooling in this repo is executed on Linux/WSL, where a stray CR
+# breaks the shebang and `bash -e` line.
+*.sh   text eol=lf
+*.py   text eol=lf
+
+# Windows-only launchers keep their native endings.
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# Generated protobuf stubs: never diff, never merge.
+nanovllm/serving/nanovllm_pb2.py      -diff merge=binary
+nanovllm/serving/nanovllm_pb2_grpc.py -diff merge=binary
+
+# Binary/archive material.
+*.png   binary
+*.out   -text diff
+*.log   -text diff
