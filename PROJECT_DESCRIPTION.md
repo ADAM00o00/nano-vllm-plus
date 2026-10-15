@@ -71,7 +71,7 @@ benchmarks/          # 12 个脚本：gRPC 压测、step 剖析、kernel 对比�
 docs/                # PRD + 三份 worklog（sm89 / 瓶颈分析 / vLLM 对标）+ Phase 1 报告
 lessons/             # 六层源码讲义（逐段精读 + 自测题）
 practice/            # 5 个无 GPU 演示脚本（采样 / pickle / KV cache / 形状 / RPC）
-experiments/         # 70 个实验脚本 + 6 份原始日志（三条主线的可复现配方）
+experiments/         # 73 个实验脚本（shared / sm89 / serving / vllm 分组）+ 6 份原始日志（可复现配方）
 ```
 
 ---

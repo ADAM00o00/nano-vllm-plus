@@ -753,7 +753,7 @@ vLLM 1280/2304 = 56%，都不受限）—— 上面整段论证都用 c=32。
 ### 执行环境
 ```bash
 # 代码在 Windows 仓库写，同步到 WSL 执行
-bash experiments/sync_to_wsl.sh                        # rsync，不带 --delete
+bash experiments/shared/sync_to_wsl.sh                        # rsync，不带 --delete
 wsl.exe -d Ubuntu -- bash /mnt/c/.../experiments/<script>.sh  # ← 一律用脚本文件
 source ~/miniconda3/etc/profile.d/conda.sh && conda activate ml
 ```

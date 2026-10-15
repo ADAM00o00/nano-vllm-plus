@@ -12,9 +12,11 @@ FILES = ["docs/sm89_worklog.md", "docs/cmp_vllm_vs_nanovllm_worklog.md"]
 REWRITES = [
     # the .tmp/ scratch tree became experiments/
     (".tmp/", "experiments/"),
-    # and later the scripts/ + logs/ split was flattened away again, so the
-    # worklogs address a file by name and the README says where it lives.
+    # the scripts/ + logs/ split was flattened, then the scripts got grouped by
+    # workstream; worklogs now name just the file and the README maps name to
+    # folder, except for the sync helper which is named in full.
     ("experiments/scripts/", "experiments/"),
+    ("experiments/sync_to_wsl.sh", "experiments/shared/sync_to_wsl.sh"),
 ]
 
 total = 0

@@ -86,7 +86,7 @@ See `bench.py` for benchmark.
 | [`docs/`](docs/) | 三份逐轮 worklog（sm_89 算子 / 瓶颈归因 / vLLM 对标）+ Phase 1 报告 |
 | [`LEARNING_GUIDE.md`](LEARNING_GUIDE.md) · [`lessons/`](lessons/) | 六层源码讲义（逐段精读 + 自测题） |
 | [`benchmarks/`](benchmarks/) | 12 个可执行基准：gRPC 压测、step 剖析、kernel 对比、vLLM 对标 |
-| [`experiments/`](experiments/) | 70 个实验脚本 + 原始日志（worklog 里每个数字的复现配方） |
+| [`experiments/`](experiments/) | 73 个实验脚本（按 shared / sm89 / serving / vllm 分组）+ 6 份原始日志（worklog 里每个数字的复现配方） |
 | [`practice/`](practice/) | 5 个无 GPU 纯标准库演示（采样 / pickle / KV cache / 形状 / RPC） |
 
 ## Star History
