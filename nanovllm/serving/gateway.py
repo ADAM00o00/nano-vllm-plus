@@ -107,11 +107,16 @@ class GatewayServicer(nanovllm_pb2_grpc.NanoVLLMServiceServicer):
 def serve_gateway(redis_url: str,
                   port: int = 50050,
                   metrics_port: int = 9101,
-                  max_workers: int = 10,
+                  max_workers: int = 64,
                   block_size: int = 256,
                   max_usage_ratio: float = 0.95,
                   tokenizer=None):
-    """Start the routing gateway (blocking)."""
+    """Start the routing gateway (blocking).
+
+    ``max_workers`` caps concurrent requests for the same reason as the engine
+    server: ``GatewayServicer.Infer`` holds its worker thread for the whole
+    downstream stream (see ``nanovllm/serving/grpc_server.py:serve``).
+    """
     if metrics_port > 0:
         try:
             from prometheus_client import start_http_server

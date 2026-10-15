@@ -42,6 +42,20 @@ Real GPU mode:
 python -m nanovllm.serving --model /path/to/Qwen3-0.6B --port 50051 --metrics-port 9100
 ```
 
+### `--max-workers` caps your concurrency
+
+A streaming `Infer` occupies one gRPC worker thread for the **entire** stream, so
+`--max-workers` is not a thread-pool tuning knob: it is the hard ceiling on
+concurrent requests, which is also the ceiling on the batch the engine can form.
+
+| `--max-workers` | behaviour |
+|---|---|
+| 10 (old default) | engine never batched past 8–10 sequences; throughput plateaued at ~800 tok/s while the engine alone sustains ~3600 tok/s at batch 32 |
+| 64 (default) | 857 → 2930 tok/s at concurrency 64; p99 2366 → 691 ms |
+| 256 | reaches 3803 tok/s at concurrency 128; concurrency 256 is refused by the memory backpressure instead of OOMing (KV pool tops out at ~162 concurrent sequences) |
+
+Keep it comfortably above the concurrency you intend to serve.
+
 Optional Redis multi-instance registration:
 
 ```bash

@@ -19,7 +19,11 @@ def main():
     parser.add_argument("--max-qps", type=float, default=100.0)
     parser.add_argument("--high-watermark", type=float, default=0.90)
     parser.add_argument("--low-watermark", type=float, default=0.70)
-    parser.add_argument("--max-workers", type=int, default=10)
+    parser.add_argument("--max-workers", type=int, default=64,
+                        help="gRPC worker threads. A streaming Infer holds one "
+                             "thread for its whole stream, so this caps concurrent "
+                             "requests and the engine's batch size; keep it above "
+                             "the concurrency you serve (default 64)")
     parser.add_argument("--max-num-seqs", type=int, default=None)
     parser.add_argument("--enforce-eager", action="store_true")
     parser.add_argument("--instance-id", default=None)

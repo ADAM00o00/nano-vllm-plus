@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """gRPC server for nano-vllm serving.
 
 Run after generating proto stubs:
@@ -129,7 +129,7 @@ class NanoVLLMServicer(nanovllm_pb2_grpc.NanoVLLMServiceServicer):
 
 
 def serve(model: str | None = None, port: int = 50051,
-          max_workers: int = 10,
+          max_workers: int = 64,
           max_qps: float = 100.0,
           high_watermark: float = 0.90,
           low_watermark: float = 0.70,
@@ -144,6 +144,13 @@ def serve(model: str | None = None, port: int = 50051,
 
     If ``mock`` is True, a GPU-free MockEngineWorker is used instead of the
     real nano-vllm engine.
+
+    ``max_workers`` is not just a tuning knob: a streaming ``Infer`` occupies its
+    worker thread for the entire stream, so this value is a hard ceiling on
+    concurrent requests and therefore on the batch the engine can form. At 10 the
+    engine never batched past 8-10 sequences no matter how much load arrived, and
+    serving throughput plateaued at ~800 tok/s while the engine itself sustains
+    ~3600 tok/s at batch 32. Keep it comfortably above the concurrency you serve.
     """
     if metrics_port > 0:
         try:
